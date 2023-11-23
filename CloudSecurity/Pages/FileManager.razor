@@ -1,36 +1,77 @@
 ﻿@page "/file-manager"
+@using CloudSecurity.Data.Entities;
 @inject IBlobService BlobService
 
-<InputFile OnChange="@OnFileChangeHandler" />
 
-@if (fileUploadModel.File is not null)
-{
-    <div class="mb-5 mt-5">
-        <h3>Chosen file</h3>
-        <p>Name: @fileUploadModel.File.Name</p>
-        <button class="btn btn-primary" onclick="@(() => UploadBlobFile())">Add to blob storage</button>
+<div class="row">
+    <div class="col-6">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">Upload file</h3>
+                <InputFile OnChange="@OnFileChangeHandler" />
+                @if (fileUploadModel.File is not null)
+                {
+                    <div class="mt-5">
+                        <h3>Chosen file</h3>
+                        <p>Name: @fileUploadModel.File.Name</p>
+                        <button class="btn btn-success" onclick="@(() => UploadBlobFile())">Add to blob storage</button>
+                    </div>
+                }
+
+                @if (result.HasValue)
+                {
+                    <div class="mt-5">
+                        @if (result.Value)
+                        {
+                            <div class="alert alert-success" role="alert">
+                                File successfully uploaded to blob storage!
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                Failed to upload file to blob storage.
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
     </div>
-}
+    <div class="col-6">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">Uploaded files</h3>
+                <ul class="list-group">
+                    @foreach (var file in fileInfoEntities)
+                    {
+                        <li class="list-group-item list-group-item-light">
+                            <a href="@file.Link">@file.Name</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
-@if (result.HasValue)
-{
-    @if (result.Value)
-    {
-        <div class="alert alert-success" role="alert">
-            File successfully uploaded to blob storage!
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-danger" role="alert">
-            Failed to upload file to blob storage.
-        </div>
-    }
-}
+
+
 
 @code {
     private FileUploadModel fileUploadModel = new FileUploadModel();
     private bool? result = null;
+    private List<FileInfoEntity> fileInfoEntities = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        fileInfoEntities = new List<FileInfoEntity>();
+
+        await foreach (var file in BlobService.GetAllFilesAsync())
+        {
+            fileInfoEntities.Add(file);
+        }
+    }
 
     private Task OnFileChangeHandler(InputFileChangeEventArgs e)
     {
@@ -48,5 +89,6 @@
     private async Task UploadBlobFile()
     {
         result = await BlobService.UploadBlobFileAsync(fileUploadModel.File);
+        await OnInitializedAsync();
     }
 }

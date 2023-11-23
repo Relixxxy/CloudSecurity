@@ -1,4 +1,5 @@
-﻿using CloudSecurity.Data.Repositories;
+﻿using CloudSecurity.Data.Entities;
+using CloudSecurity.Data.Repositories;
 using CloudSecurity.Services.Interfaces;
 using CloudSecurity.Validators;
 using Microsoft.AspNetCore.Components.Forms;
@@ -14,6 +15,11 @@ public class BlobService : IBlobService
     {
         _blobRepository = blobRepository;
         _validator = validator;
+    }
+
+    public IAsyncEnumerable<FileInfoEntity> GetAllFilesAsync()
+    {
+        return _blobRepository.GetAllFilesAsync();
     }
 
     public async Task<bool> UploadBlobFileAsync(IBrowserFile file)
