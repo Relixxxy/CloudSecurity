@@ -1,0 +1,52 @@
+﻿@page "/file-manager"
+@inject IBlobService BlobService
+
+<InputFile OnChange="@OnFileChangeHandler" />
+
+@if (fileUploadModel.File is not null)
+{
+    <div class="mb-5 mt-5">
+        <h3>Chosen file</h3>
+        <p>Name: @fileUploadModel.File.Name</p>
+        <button class="btn btn-primary" onclick="@(() => UploadBlobFile())">Add to blob storage</button>
+    </div>
+}
+
+@if (result.HasValue)
+{
+    @if (result.Value)
+    {
+        <div class="alert alert-success" role="alert">
+            File successfully uploaded to blob storage!
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger" role="alert">
+            Failed to upload file to blob storage.
+        </div>
+    }
+}
+
+@code {
+    private FileUploadModel fileUploadModel = new FileUploadModel();
+    private bool? result = null;
+
+    private Task OnFileChangeHandler(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        if (file != null)
+        {
+            fileUploadModel.File = file;
+            result = null;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task UploadBlobFile()
+    {
+        result = await BlobService.UploadBlobFileAsync(fileUploadModel.File);
+    }
+}

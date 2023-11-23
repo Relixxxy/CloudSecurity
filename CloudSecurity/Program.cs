@@ -1,15 +1,19 @@
+using Azure.Storage.Blobs;
+using CloudSecurity;
 using CloudSecurity.Areas.Identity;
 using CloudSecurity.Data;
-using Microsoft.AspNetCore.Components;
+using CloudSecurity.Data.Repositories;
+using CloudSecurity.Services;
+using CloudSecurity.Services.Interfaces;
+using CloudSecurity.Validators;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.Configure<CloudSecuritySettings>(builder.Configuration);
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -20,9 +24,16 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
 
+var azureBlobConnection = builder.Configuration["AZURE_BLOB_CONNECTION"];
+builder.Services.AddSingleton(_ => new BlobServiceClient(azureBlobConnection));
+builder.Services.AddScoped<IBlobRepository, BlobRepository>();
+builder.Services.AddScoped<IBlobService, BlobService>();
+
+var maxFileSize = builder.Configuration.GetValue<int>("BlobConfig:MaxFileSize");
+builder.Services.AddTransient(_ => new BlobFileValidator(maxFileSize));
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -30,7 +41,6 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
