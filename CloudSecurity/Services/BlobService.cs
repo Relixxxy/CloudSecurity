@@ -22,6 +22,11 @@ public class BlobService : IBlobService
         return _blobRepository.GetAllFilesAsync();
     }
 
+    public Task RemoveBlobFileAsync(string filename)
+    {
+        return _blobRepository.RemoveBlobFileAsync(filename);
+    }
+
     public async Task<bool> UploadBlobFileAsync(IBrowserFile file)
     {
         var validationResult = _validator.Validate(file);

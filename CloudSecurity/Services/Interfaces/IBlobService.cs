@@ -8,4 +8,6 @@ public interface IBlobService
     Task<bool> UploadBlobFileAsync(IBrowserFile file);
 
     IAsyncEnumerable<FileInfoEntity> GetAllFilesAsync();
+
+    Task RemoveBlobFileAsync(string filename);
 }
